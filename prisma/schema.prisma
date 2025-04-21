@@ -34,5 +34,6 @@ model Transaction {
   TaxRelevantIndicator  String
   CreditorIdentifier  String
   MandateReference  String
+  Exclude Boolean @default(false)
 }
 

@@ -70,17 +70,21 @@ export default function Summary({
     100;
 
   // Total Expenses
-  const totalExpenses = transactions.reduce(
-    (acc, transaction) =>
-      acc +
-      (transaction.TransactionAmount < 0 ? transaction.TransactionAmount : 0),
-    0
+  const totalExpenses = Math.abs(
+    transactions.reduce(
+      (acc, transaction) =>
+        acc +
+        (transaction.TransactionAmount < 0 ? transaction.TransactionAmount : 0),
+      0
+    )
   );
-  const totalExpensesPreviousMonth = transactionsPreviousMonth.reduce(
-    (acc, transaction) =>
-      acc +
-      (transaction.TransactionAmount < 0 ? transaction.TransactionAmount : 0),
-    0
+  const totalExpensesPreviousMonth = Math.abs(
+    transactionsPreviousMonth.reduce(
+      (acc, transaction) =>
+        acc +
+        (transaction.TransactionAmount < 0 ? transaction.TransactionAmount : 0),
+      0
+    )
   );
   const totalExpensesPercentageChange =
     ((totalExpenses - totalExpensesPreviousMonth) /

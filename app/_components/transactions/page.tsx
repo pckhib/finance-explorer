@@ -1,6 +1,8 @@
 import { Transaction } from "@prisma/client";
+import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTransaction } from "@/contexts/transaction-context";
 import { cn } from "@/lib/utils";
 
 interface TransactionProps {
@@ -16,15 +19,61 @@ interface TransactionProps {
 }
 
 export default function Transactions({ transactions }: TransactionProps) {
+  const { updateTransaction } = useTransaction();
+
+  const totalIncome = transactions
+    .filter((transaction) => !transaction.Exclude)
+    .reduce(
+      (acc, transaction) =>
+        acc +
+        (transaction.TransactionAmount > 0 ? transaction.TransactionAmount : 0),
+      0
+    );
+  const totalExpenses = Math.abs(
+    transactions
+      .filter((transaction) => !transaction.Exclude)
+      .reduce(
+        (acc, transaction) =>
+          acc +
+          (transaction.TransactionAmount < 0
+            ? transaction.TransactionAmount
+            : 0),
+        0
+      )
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>All Transactions</CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-6 mt-4 space-y-2">
+          <div className="h-6 w-full overflow-hidden rounded-md bg-gray-100">
+            {transactions.length > 0 && (
+              <div
+                className="h-full bg-emerald-500"
+                style={{
+                  width: `${Math.min(100, (totalIncome / Math.max(totalIncome, totalExpenses)) * 100)}%`,
+                }}
+              />
+            )}
+          </div>
+          <div className="h-6 w-full overflow-hidden rounded-md bg-gray-100">
+            {transactions.length > 0 && (
+              <div
+                className="h-full bg-rose-500"
+                style={{
+                  width: `${Math.min(100, (totalExpenses / Math.max(totalIncome, totalExpenses)) * 100)}%`,
+                }}
+              />
+            )}
+          </div>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Counterparty</TableHead>
               <TableHead>Description</TableHead>
@@ -35,6 +84,16 @@ export default function Transactions({ transactions }: TransactionProps) {
           <TableBody>
             {transactions.map((transaction) => (
               <TableRow key={transaction.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={!transaction.Exclude}
+                    onCheckedChange={async (checked) => {
+                      updateTransaction(transaction.id, {
+                        Exclude: !checked,
+                      });
+                    }}
+                  />
+                </TableCell>
                 <TableCell>
                   {transaction.TransactionBookingDate.toLocaleDateString()}
                 </TableCell>

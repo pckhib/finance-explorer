@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTransaction } from "@/contexts/transaction-context";
 
 import MonthPicker from "./_components/month-picker";
 import Summary from "./_components/summary";
@@ -22,7 +23,7 @@ import Transactions from "./_components/transactions/page";
 import UploadTransaction from "./_components/upload-transaction";
 
 export default function Home() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { transactions } = useTransaction();
   const [transactionsCurrentMonth, setTransactionsCurrentMonth] = useState<
     Transaction[]
   >([]);
@@ -32,35 +33,26 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   useEffect(() => {
-    async function fetchTransactions() {
-      try {
-        const response = await fetch("/api/transaction");
-        if (!response.ok) {
-          throw new Error("Failed to fetch transactions");
-        }
-        const data = await response.json();
-        const parsedData = data
-          .map((project: Transaction) => ({
-            ...project,
-            TransactionBookingDate: new Date(project.TransactionBookingDate),
-            TransactionValueDate: new Date(project.TransactionValueDate),
-          }))
-          .sort((a: Transaction, b: Transaction) => {
-            return (
-              a.TransactionValueDate.getTime() -
-              b.TransactionValueDate.getTime()
-            );
-          });
-
-        setTransactions(parsedData);
-        console.log(parsedData);
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      }
-    }
-
-    fetchTransactions();
-  }, []);
+    setTransactionsCurrentMonth(
+      transactions.filter(
+        (transaction) =>
+          transaction.TransactionValueDate.getFullYear() ===
+            selectedDate.getFullYear() &&
+          transaction.TransactionValueDate.getMonth() ===
+            selectedDate.getMonth()
+      )
+    );
+    const previousMonth = subMonths(selectedDate, 1);
+    setTransactionsPreviousMonth(
+      transactions.filter(
+        (transaction) =>
+          transaction.TransactionValueDate.getFullYear() ===
+            previousMonth.getFullYear() &&
+          transaction.TransactionValueDate.getMonth() ===
+            previousMonth.getMonth()
+      )
+    );
+  }, [transactions, selectedDate]);
 
   return (
     <>
@@ -69,27 +61,10 @@ export default function Home() {
           value={selectedDate}
           onChange={(date) => {
             setSelectedDate(date);
-            setTransactionsCurrentMonth(
-              transactions.filter(
-                (transaction) =>
-                  transaction.TransactionValueDate.getFullYear() ===
-                    date.getFullYear() &&
-                  transaction.TransactionValueDate.getMonth() ===
-                    date.getMonth()
-              )
-            );
-            const previousMonth = subMonths(date, 1);
-            setTransactionsPreviousMonth(
-              transactions.filter(
-                (transaction) =>
-                  transaction.TransactionValueDate.getFullYear() ===
-                    previousMonth.getFullYear() &&
-                  transaction.TransactionValueDate.getMonth() ===
-                    previousMonth.getMonth()
-              )
-            );
           }}
-          fromYear={2025}
+          fromYear={Math.min(
+            ...transactions.map((t) => t.TransactionValueDate.getFullYear())
+          )}
           toYear={new Date().getFullYear()}
         />
         <Dialog>
@@ -107,8 +82,12 @@ export default function Home() {
         </Dialog>
       </div>
       <Summary
-        transactions={transactionsCurrentMonth}
-        transactionsPreviousMonth={transactionsPreviousMonth}
+        transactions={transactionsCurrentMonth.filter(
+          (transaction) => !transaction.Exclude
+        )}
+        transactionsPreviousMonth={transactionsPreviousMonth.filter(
+          (transaction) => !transaction.Exclude
+        )}
       />
       <Tabs className="space-y-2" defaultValue="transactions">
         <TabsList>
