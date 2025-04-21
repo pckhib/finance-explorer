@@ -1,18 +1,7 @@
-import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import UploadTransaction from "./_components/upload-transaction";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -44,21 +33,6 @@ export default function RootLayout({
       >
         <Providers>
           <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-            <div className="flex justify-end">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-1">
-                    <Plus className="h-3.5 w-3.5" /> <span>Import</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogTitle>Upload Transaction</DialogTitle>
-                  <DialogDescription>
-                    <UploadTransaction />
-                  </DialogDescription>
-                </DialogContent>
-              </Dialog>
-            </div>
             {children}
           </main>
           <Toaster />
